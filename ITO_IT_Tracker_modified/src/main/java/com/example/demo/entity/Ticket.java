@@ -57,7 +57,7 @@ public class Ticket {
 	@Column(name = "assignee_id")
 	private Integer assigneeId;
 
-	@JsonFormat(pattern = "dd-MM-yyyy hh:mm a\"") // change date format
+	@JsonFormat(pattern = "dd-MM-yyyy hh:mm a\"") 
 	@Column(name = "create_date_time")
 	private LocalDateTime createDateTime = LocalDateTime.now();
 
@@ -67,16 +67,14 @@ public class Ticket {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "assignee_id", referencedColumnName = "admin_id", insertable = false, updatable = false)
-	@JsonIgnore
 	private AdminTeam assignee;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "reported_id", referencedColumnName = "user_id", insertable = false, updatable = false)
-	@JsonIgnore
 	private User user;
 
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "ticket_id ", insertable = false, updatable = false)
-	@JsonIgnore
+	
 	private List<Comments> commentList;
 }

@@ -10,7 +10,7 @@ import com.example.demo.entity.SubCategory;
 public interface SubCategoryRepo extends JpaRepository<SubCategory, Integer>{
 
 	@Query(nativeQuery = true,
-            value ="SELECT sub_category.sub_category_desc"+" FROM sub_category "+" WHERE sub_category.sub_category_id=:sub_cat_id")
-public String getDescription(@Param("sub_cat_id")  Integer sub_cat_id);
+            value ="SELECT sub_category.sub_category_desc"+" FROM sub_category "+" WHERE sub_category.sub_category_id=:subCatId")
+public String getDescription(@Param("subCatId")  Integer subCatId);
 	
 }

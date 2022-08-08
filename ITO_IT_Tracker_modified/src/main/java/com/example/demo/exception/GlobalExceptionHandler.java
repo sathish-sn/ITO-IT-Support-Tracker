@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -80,7 +81,8 @@ public class GlobalExceptionHandler extends Throwable{
 	@ExceptionHandler(NumberFormatException.class)
 	public ResponseEntity<ApiResponse> NumberformatMisMatch(NumberFormatException exception){
 		
-		String message = "Please enter valid input";
+		String message = "Please check your input";
+	
 		ApiResponse apiResponse = new ApiResponse(message);
 		return new ResponseEntity<ApiResponse> (apiResponse,HttpStatus.NOT_FOUND);
 	}
@@ -116,5 +118,14 @@ public class GlobalExceptionHandler extends Throwable{
 		
 		return new ResponseEntity<ApiResponse> (apiResponse,HttpStatus.NOT_FOUND);
 	}
-	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(MissingPathVariableException.class)
+	public ResponseEntity<ApiResponse> missingPathVariableException(MissingPathVariableException exception){
+		
+		String message = exception.getMessage();
+		
+		ApiResponse apiResponse = new ApiResponse(message);
+		
+		return new ResponseEntity<ApiResponse> (apiResponse,HttpStatus.NOT_FOUND);
+	}
 }

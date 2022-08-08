@@ -73,10 +73,10 @@ public class TeamController {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------	
 
-	@GetMapping("/ticketId/{ticketId}")
-	public ResponseEntity<TicketResponse> viewTicketById(@PathVariable Integer ticketId) {
+	@GetMapping("/Id/{Id}")
+	public ResponseEntity<TicketResponse> viewTicketById(@PathVariable Integer Id) {
 
-		return ResponseEntity.ok(this.service.viewTicketByID(ticketId));
+		return ResponseEntity.ok(this.service.viewTicketByID(Id));
 	
 	}
 

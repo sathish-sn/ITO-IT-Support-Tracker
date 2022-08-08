@@ -67,12 +67,12 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public String commentOnTicket(CommentDto commentDto, Integer ticketId, Integer userId) {
 
-		Ticket ticket = this.teamRepo.findById(ticketId)
+		Ticket ticket = teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
 
 		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", userId));
 
-		Comments comment = this.modelMapper.map(commentDto, Comments.class);
+		Comments comment = modelMapper.map(commentDto, Comments.class);
 
 		comment.setMessage(commentDto.getMessage());
 
@@ -90,10 +90,9 @@ public class UserServiceImpl implements UserService {
 
 		Map<String, String> map = new HashMap<String, String>();
 
-		 this.userRepo.findById(userId)
-				.orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
+		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
 
-		Ticket newTicket = this.modelMapper.map(teamdto, Ticket.class);
+		Ticket newTicket = modelMapper.map(teamdto, Ticket.class);
 
 		System.out.println(teamdto.getCategoryId());
 
@@ -109,7 +108,7 @@ public class UserServiceImpl implements UserService {
 
 		newTicket.setCategoryId(teamdto.getCategoryId());
 
-		SubCategory matchCategory = this.subCategoryRepo.findById(teamdto.getSubCategoryId())
+		SubCategory matchCategory = subCategoryRepo.findById(teamdto.getSubCategoryId())
 				.orElseThrow(() -> new ResourceNotFoundException("Subcategory", "Id", teamdto.getSubCategoryId()));
 
 		subCategoryRepo.findById(teamdto.getSubCategoryId());
@@ -117,16 +116,20 @@ public class UserServiceImpl implements UserService {
 		newTicket.setSubCategoryId(teamdto.getSubCategoryId());
 
 		if (teamdto.getPriorityId() == null) {
+
 			newTicket.setPriorityId(teamdto.getPriorityId());
 		} else {
 
-			this.priorityRepo.findById(teamdto.getPriorityId())
+			priorityRepo.findById(teamdto.getPriorityId())
 					.orElseThrow(() -> new ResourceNotFoundException("Priority", "Id", teamdto.getPriorityId()));
 
 			newTicket.setPriorityId(teamdto.getPriorityId());
 		}
+
 		if (matchCategory.getCategory_id() != teamdto.getCategoryId()) {
+
 			map.put("Message", "subcategory id not matched with category! enter valid subcategory id");
+
 			return map;
 		}
 
@@ -157,45 +160,45 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public List<TicketResponseForViewAllTicket> viewTicketByUserId(Integer userId) {
-		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("UserId", "Id", userId));
+		
+		userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("UserId", "Id", userId));
 
 		List<Ticket> tickets = this.teamRepo.findAll();
+		
 		List<TicketResponseForViewAllTicket> setTicket = new ArrayList<TicketResponseForViewAllTicket>();
 
 		for (Ticket getTicket : tickets) {
 
 			if (getTicket.getReportedId() == userId) {
+
 				TicketResponseForViewAllTicket response = new TicketResponseForViewAllTicket();
+
 				response.setTicketId(getTicket.getTicketId());
 
-				Category category = this.categoryRepo.findById(getTicket.getCategoryId()).orElseThrow(
-						() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getCategoryId()));
-				response.setCategoryDesc(category.getCategoryDesc());
+				response.setCategoryDesc(categoryRepo.getDescription(getTicket.getCategoryId()));
 
-				SubCategory subCategory = this.subCategoryRepo.findById(getTicket.getSubCategoryId()).orElseThrow(
-						() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getSubCategoryId()));
-				response.setSubCategoryDesc(subCategory.getSubCategoryDesc());
+				response.setSubCategoryDesc(this.subCategoryRepo.getDescription(getTicket.getSubCategoryId()));
 
-				Status getStatus = this.statusRepo.findById(getTicket.getStatusId()).orElseThrow(
-						() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getSubCategoryId()));
-				response.setStatus(getStatus.getStatus());
+				response.setStatus(this.statusRepo.getStatus(getTicket.getStatusId()));
 
 				response.setSubject(getTicket.getSubject());
+
 				response.setDescription(getTicket.getDescription());
 
 				if (getTicket.getPriorityId() == null) {
+
 					response.setPriority(null);
+
 				} else {
-					Priority getPriority = this.priorityRepo.findById(getTicket.getPriorityId()).orElseThrow(
-							() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getPriorityId()));
-					response.setPriority(getPriority.getPriority());
+					response.setPriority(this.priorityRepo.getPriority(getTicket.getPriorityId()));
 				}
+
 				if (getTicket.getAssigneeId() == null) {
-					response.setAssignee(null);
+
+					response.setAssignee("not assigned");
 				} else {
-					AdminTeam assignee = this.adminRepo.findById(getTicket.getAssigneeId()).orElseThrow(
-							() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getAssigneeId()));
-					response.setAssignee(assignee.getName());
+
+					response.setAssignee(this.adminRepo.getAdmin(getTicket.getAssigneeId()));
 				}
 				response.setLink("http://localhost:8080/api/team/ticketId/" + getTicket.getTicketId());
 
@@ -210,39 +213,31 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public TicketResponseForViewAllTicket viewTicketByTicketId(Integer ticketId) {
+
 		TicketResponseForViewAllTicket response = new TicketResponseForViewAllTicket();
 
-		Ticket getTicket = this.teamRepo.findById(ticketId)
+		Ticket getTicket = teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", ticketId));
 		response.setTicketId(ticketId);
 
-		Category category = this.categoryRepo.findById(getTicket.getCategoryId()).orElseThrow(
-				() -> new ResourceNotFoundException("Subcategory", "Id",getTicket.getCategoryId()));
+		response.setCategoryDesc(categoryRepo.getDescription(getTicket.getCategoryId()));
 
-		response.setCategoryDesc(category.getCategoryDesc());
+		response.setSubCategoryDesc(subCategoryRepo.getDescription(getTicket.getSubCategoryId()));
 
-		SubCategory subCategory = this.subCategoryRepo.findById(getTicket.getSubCategoryId()).orElseThrow(
-				() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getSubCategoryId()));
-
-		response.setSubCategoryDesc(subCategory.getSubCategoryDesc());
-
-		Status getStatus = this.statusRepo.findById(getTicket.getStatusId()).orElseThrow(
-				() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getStatusId()));
-		response.setStatus(getStatus.getStatus());
+		response.setStatus(statusRepo.getStatus(getTicket.getStatusId()));
 
 		response.setSubject(getTicket.getSubject());
+
 		response.setDescription(getTicket.getDescription());
 
-		Priority getPriority = this.priorityRepo.findById(getTicket.getPriorityId()).orElseThrow(
-				() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getPriorityId()));
-		response.setPriority(getPriority.getPriority());
+		response.setPriority(priorityRepo.getPriority(getTicket.getPriorityId()));
 
 		if (getTicket.getAssigneeId() == null) {
+
 			response.setAssignee(null);
 		} else {
-			AdminTeam assignee = this.adminRepo.findById(getTicket.getAssigneeId()).orElseThrow(
-					() -> new ResourceNotFoundException("Subcategory", "Id", getTicket.getAssigneeId()));
-			response.setAssignee(assignee.getName());
+
+			response.setAssignee(this.adminRepo.getAdmin(getTicket.getAssigneeId()));
 		}
 
 		response.setLink("http://localhost:8080/api/team/ticketId/" + getTicket.getTicketId());

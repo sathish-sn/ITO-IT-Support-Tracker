@@ -81,40 +81,44 @@ public class TeamServiceImpl implements TeamServices {
 
 		List<TicketResponseForViewAllTicket> allTicket = new ArrayList<TicketResponseForViewAllTicket>();
 
-		for (Ticket getAll : viewTicket) {
+		
+		
+		for (Ticket ticket : viewTicket) {
+
 			TicketResponseForViewAllTicket response = new TicketResponseForViewAllTicket();
 
-			response.setTicketId(getAll.getTicketId());
-			System.out.println();
+			response.setTicketId(ticket.getTicketId());
 
-			Category category = this.categoryRepo.findById(getAll.getCategoryId())
-					.orElseThrow(() -> new ResourceNotFoundException("category", "Id", getAll.getCategoryId()));
-			response.setCategoryDesc(category.getCategoryDesc());
+			response.setCategoryDesc(categoryRepo.getDescription(ticket.getCategoryId()));
 
-			SubCategory subCategory = this.subCategoryRepo.findById(getAll.getSubCategoryId())
-					.orElseThrow(() -> new ResourceNotFoundException("Subcategory", "Id", getAll.getSubCategoryId()));
-			response.setSubCategoryDesc(subCategory.getSubCategoryDesc());
+			response.setSubCategoryDesc(subCategoryRepo.getDescription(ticket.getSubCategoryId()));
 
-			Status getStatus = this.statusRepo.findById(getAll.getStatusId())
-					.orElseThrow(() -> new ResourceNotFoundException("Status", "Id", getAll.getStatusId()));
-			response.setStatus(getStatus.getStatus());
+			response.setStatus(statusRepo.getStatus(ticket.getStatusId()));
 
-			response.setSubject(getAll.getSubject());
-			response.setDescription(getAll.getDescription());
-			if(getAll.getAssignee()==null) {
-				response.setAssignee(null);
-			}else {
-			response.setAssignee(getAll.getAssignee().getName());
-			}
-			if (getAll.getPriorityId() == null) {
-				response.setPriority(null);
+			response.setSubject(ticket.getSubject());
+
+			response.setDescription(ticket.getDescription());
+
+			if (ticket.getAssignee() == null) {
+				
+				response.setAssignee("not assigned");
+
 			} else {
-				Priority getPriority = this.priorityRepo.findById(getAll.getPriorityId())
-						.orElseThrow(() -> new ResourceNotFoundException("priority", "Id", getAll.getPriorityId()));
-				response.setPriority(getPriority.getPriority());
+
+				response.setAssignee(ticket.getAssignee().getName());
 			}
 
-			response.setLink("http://localhost:8080/api/team/ticketId/" + getAll.getTicketId());
+			if (ticket.getPriorityId() == null) {
+
+				response.setPriority(null);
+				
+			} else {
+
+				response.setPriority(priorityRepo.getPriority(ticket.getPriorityId()));
+			}
+
+			response.setLink("http://localhost:8080/api/team/ticketId/" + ticket.getTicketId());
+			
 			allTicket.add(response);
 		}
 
@@ -126,46 +130,45 @@ public class TeamServiceImpl implements TeamServices {
 	public TicketResponse viewTicketByID(Integer ticketId) {
 		TicketResponse response = new TicketResponse();
 
-		Ticket getTicket = this.teamRepo.findById(ticketId)
+		Ticket getTicket = teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
+		
 		response.setTicketId(ticketId);
 
-		Category category = this.categoryRepo.findById(getTicket.getCategoryId())
-				.orElseThrow(() -> new ResourceNotFoundException("category", "Id", getTicket.getCategoryId()));
-		response.setCategoryDesc(category.getCategoryDesc());
+		response.setCategoryDesc(categoryRepo.getDescription(getTicket.getCategoryId()));
 
-		SubCategory subCategory = this.subCategoryRepo.findById(getTicket.getSubCategoryId())
-				.orElseThrow(() -> new ResourceNotFoundException("subcategory", "Id", getTicket.getSubCategoryId()));
-		response.setSubCategoryDesc(subCategory.getSubCategoryDesc());
-
-		Status getStatus = this.statusRepo.findById(getTicket.getStatusId())
-				.orElseThrow(() -> new ResourceNotFoundException("status", "Id", getTicket.getStatusId()));
-		response.setStatus(getStatus.getStatus());
-
+		response.setSubCategoryDesc(subCategoryRepo.getDescription(getTicket.getSubCategoryId()));
+		
+		response.setStatus(statusRepo.getStatus(getTicket.getStatusId()));
+		
 		response.setSubject(getTicket.getSubject());
+		
 		response.setDescription(getTicket.getDescription());
 
 		if (getTicket.getPriorityId() == null) {
+			
 			response.setPriority(null);
+			
 		} else {
-			Priority getPriority = this.priorityRepo.findById(getTicket.getPriorityId())
-					.orElseThrow(() -> new ResourceNotFoundException("priority", "Id", getTicket.getPriorityId()));
-			response.setPriority(getPriority.getPriority());
+			
+			response.setPriority(priorityRepo.getPriority(getTicket.getPriorityId()));
 		}
 
 		if (getTicket.getAssigneeId() == null) {
-			response.setAssignee(null);
+			
+			response.setAssignee("not assigned");
+			
 		} else {
-			AdminTeam assignee = this.adminRepo.findById(getTicket.getAssigneeId())
-					.orElseThrow(() -> new ResourceNotFoundException("Assignee", "Id", getTicket.getAssigneeId()));
-			response.setAssignee(assignee.getName());
+			
+			response.setAssignee(adminRepo.getAdmin(getTicket.getAssigneeId()));
+		
 		}
 
 		response.setLink("http://localhost:8080/api/team/ticketId/" + ticketId);
 
-		List<Comments> comments = this.commentRepo.findAll();
+		List<Comments> comments = commentRepo.findAll();
 
-		response.setComment(this.returnCommentResponse(comments, ticketId));
+		response.setComment(returnCommentResponse(comments, ticketId));
 
 		return response;
 
@@ -173,13 +176,14 @@ public class TeamServiceImpl implements TeamServices {
 
 	@Override
 	public String setAssignee(Integer ticketId, Integer adminId, Integer userId) {
-		Ticket setAssignee = this.teamRepo.findById(ticketId)
+		
+		Ticket setAssignee = teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
 
-		User checkUserId = this.userRepo.findById(userId)
+		User checkUserId = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("userId", "Id", userId));
 
-		this.adminRepo.findById(adminId).orElseThrow(() -> new ResourceNotFoundException("Assignee", "Id", adminId));
+		adminRepo.findById(adminId).orElseThrow(() -> new ResourceNotFoundException("Assignee", "Id", adminId));
 
 		setAssignee.setUser(checkUserId);
 
@@ -187,7 +191,7 @@ public class TeamServiceImpl implements TeamServices {
 
 		setAssignee.setLastModifiedDateTime(LocalDateTime.now());
 
-		this.teamRepo.save(setAssignee);
+		teamRepo.save(setAssignee);
 
 		String msg = "Assignee assinged";
 
@@ -197,28 +201,29 @@ public class TeamServiceImpl implements TeamServices {
 	@Override
 	public String changeStatus(Integer ticketId, Integer userId, Integer statusId) {
 
-		Ticket setStatus = this.teamRepo.findById(ticketId)
+		Ticket setStatus = teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", ticketId));
 
-		Status getStatus = this.statusRepo.findById(setStatus.getStatusId())
+		Status getStatus = statusRepo.findById(setStatus.getStatusId())
 				.orElseThrow(() -> new ResourceNotFoundException("status", "Id", setStatus.getStatusId()));
 
 		String getOldStatus = getStatus.getStatus();
 
 		if (getOldStatus.equalsIgnoreCase("completed")) {
+			
 			return "Ticket status has been completed can't be changed";
 		}
 
 		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user ", "Id", userId));
 
-		Status checkStatusId = this.statusRepo.findById(statusId)
+		Status checkStatusId = statusRepo.findById(statusId)
 				.orElseThrow(() -> new ResourceNotFoundException("status", "Id", statusId));
 
 		setStatus.setLastModifiedDateTime(LocalDateTime.now());
 
 		setStatus.setStatusId(statusId);
 
-		this.teamRepo.save(setStatus);
+		teamRepo.save(setStatus);
 
 		String msg = "status changed from " + getOldStatus + " to " + checkStatusId.getStatus();
 
@@ -228,15 +233,16 @@ public class TeamServiceImpl implements TeamServices {
 	@Override
 	public String changePriority(Integer ticketId, Integer priorityId, Integer userId) {
 
-		Ticket setNewPriority = this.teamRepo.findById(ticketId)
+		Ticket setNewPriority = teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", ticketId));
 
-		Priority checkPriorityId = this.priorityRepo.findById(priorityId)
+		Priority checkPriorityId = priorityRepo.findById(priorityId)
 				.orElseThrow(() -> new ResourceNotFoundException("priority", "Id", priorityId));
 
-		System.out.println(setNewPriority.getPriorityId());
 		Integer value = setNewPriority.getPriorityId();
+		
 		if (value == null) {
+			
 			setNewPriority.setPriorityId(priorityId);
 
 			setNewPriority.setLastModifiedDateTime(LocalDateTime.now());
@@ -249,9 +255,9 @@ public class TeamServiceImpl implements TeamServices {
 
 		}
 
-		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user", "Id", userId));
+		userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user", "Id", userId));
 
-		Status getStatus = this.statusRepo.findById(setNewPriority.getStatusId())
+		Status getStatus = statusRepo.findById(setNewPriority.getStatusId())
 				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", setNewPriority.getStatusId()));
 
 		String getStatusOfTicket = getStatus.getStatus();
@@ -275,6 +281,7 @@ public class TeamServiceImpl implements TeamServices {
 		this.teamRepo.save(setNewPriority);
 
 		if (getOldPriority.equalsIgnoreCase(checkPriorityId.getPriority())) {
+			
 			return "Priority is already in " + getOldPriority + " please try to change to another priority";
 		}
 
@@ -317,7 +324,6 @@ public class TeamServiceImpl implements TeamServices {
 
 		User user = this.modelMapper.map(userDto, User.class);
 
-
 		String regexp = "(?:[a-z0-9A-Z!#$%&'?^_`{|}~-]+(?:\\.[a-z0-9A-Z!#$%&'*?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9A-Z](?:[a-z0-9A-Z-]*[a-z0-9A-Z])?\\.)+[a-z0-9A-Z](?:[a-z0-9A-Z]*[a-z0-9A-Z])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9A-Z]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
 
 		Pattern pattern = Pattern.compile(regexp);
@@ -325,13 +331,16 @@ public class TeamServiceImpl implements TeamServices {
 		Matcher matcher = pattern.matcher(userDto.getEmailId());
 
 		if (!matcher.matches()) {
+			
 			return "Please enter valid email id";
 		}
 
 		int count = 2;
+		
 		String checkIsUpper = userDto.getEmailId();
+		
 		char[] charArray = checkIsUpper.toCharArray();
-		System.out.println(charArray);
+		
 		for (int i = 0; i < charArray.length; i++) {
 
 			if (charArray[i] == '@' || charArray[i] == '.') {
@@ -339,63 +348,83 @@ public class TeamServiceImpl implements TeamServices {
 				continue;
 
 			} else if (Character.isUpperCase(charArray[i])) {
+				
 				count++;
 			}
 		}
-		if(count == charArray.length)
-		if (userDto.getEmailId().equalsIgnoreCase(userDto.getEmailId())) {
+		if (count == charArray.length)
+			
+			if (userDto.getEmailId().equalsIgnoreCase(userDto.getEmailId())) {
 
-			return "Email Id is already Exits";
-		}
-	
+				return "Email Id is already Exits";
+			}
 
-	user.setCreateDateTime(user.getCreateDateTime());
+		user.setCreateDateTime(user.getCreateDateTime());
 
-	user.setLastModifiedDateTime(user.getLastModifiedDateTime());
+		user.setLastModifiedDateTime(user.getLastModifiedDateTime());
 
-	user.setEmailId(userDto.getEmailId());
+		user.setEmailId(userDto.getEmailId());
 
-	this.userRepo.save(user);
+		this.userRepo.save(user);
 
-	return"User with email "+userDto.getEmailId()+" created successfully \n "+"http://localhost:8080/api/team/users/?userId="+user.getUserId();
+		return "User with email " + userDto.getEmailId() + " created successfully \n "
+				+ "http://localhost:8080/api/team/users/?userId=" + user.getUserId();
 
 	}
 
 	@Override
 	public UserDto viewUser(Optional<Integer> userId, Optional<String> emailId) {
+		
 		Integer getUserId = null;
+		
 		try {
+			
 			getUserId = Integer.valueOf(userId.get());
+			
 		} catch (Exception e) {
+			
 			getUserId = null;
 		}
+
 		String getEmail = null;
+
 		try {
 			getEmail = String.valueOf(emailId.get());
+			
 		} catch (Exception e) {
+			
 			getEmail = null;
 		}
 
 		if (getUserId != null && getEmail == null) {
 
 			int temp = getUserId;
+			
 			User userById = this.userRepo.findById(getUserId)
 					.orElseThrow(() -> new ResourceNotFoundException("User", "Id", temp));
+			
 			return this.modelMapper.map(userById, UserDto.class);
 		}
+
 		Integer UserId = null;
+
 		try {
 			UserId = this.userRepo.findByEmail(getEmail);
+			
 		} catch (Exception e) {
+			
 			throw new ResourceNotFoundException("Email Id not found  please check the email id");
 		}
+
 		if (emailId != null && getUserId == null) {
-			System.out.println("finding by user Id");
 
 			UserId = this.userRepo.findByEmail(getEmail);
+
 			int temp = UserId;
+
 			User users = this.userRepo.findById(UserId)
 					.orElseThrow(() -> new ResourceNotFoundException("User", "Id", temp));
+
 			return this.modelMapper.map(users, UserDto.class);
 		}
 
@@ -403,49 +432,69 @@ public class TeamServiceImpl implements TeamServices {
 
 			throw new ResourceNotFoundException("User Id and Email Id not matched");
 		}
+
 		if (getUserId == null && emailId == null) {
+
 			throw new ResourceNotFoundException("Please enter User Id or Email");
 		}
+
 		if (getUserId != null && emailId != null) {
+			
 			int temp = getUserId;
+
 			User userById = this.userRepo.findById(getUserId)
 					.orElseThrow(() -> new ResourceNotFoundException("User", "Id", temp));
+
 			return this.modelMapper.map(userById, UserDto.class);
 		}
 
-		return null;// map;
+		return null;
 	}
 
 	@Override
 	public List<UserDto> viewAllUser() {
-		List<User> users = this.userRepo.findAll();
-		List<UserDto> userDtos = users.stream().map(user -> this.modelMapper.map(user, UserDto.class))
+		List<User> users = userRepo.findAll();
+
+		List<UserDto> userDtos = users.stream().map(user -> modelMapper.map(user, UserDto.class))
 				.collect(Collectors.toList());
+
 		return userDtos;
 
 	}
 
 	@Override
 	public UserDto updateuser(UserDto userDto, Integer userId) {
-		User user = this.userRepo.findById(userId)
+		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
+		
 		user.setName(userDto.getName());
 
 		user.setLastModifiedDateTime(LocalDateTime.now());
 
-		User updatedUser = this.userRepo.save(user);
+		User updatedUser = userRepo.save(user);
 
-		UserDto userDto1 = this.modelMapper.map(updatedUser, UserDto.class);
+		UserDto userDto1 = modelMapper.map(updatedUser, UserDto.class);
 
 		return userDto1;
 	}
 
 	@Override
 	public void deleteUser(Integer userId) {
-		User user = this.userRepo.findById(userId)
+		List<Ticket> ticket = teamRepo.findAll();
+		for (Ticket findTicket : ticket) {
+			
+			if (findTicket.getReportedId() == userId) {
+				
+				throw new ResourceNotFoundException("Cant Delete the user as Ticket is pending");
+			
+			}
+		}
+		
+		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
 
 		this.userRepo.delete(user);
+		
 	}
 
 	public List<CommentResponse> returnCommentResponse(List<Comments> comments, int ticketId) {
@@ -458,6 +507,7 @@ public class TeamServiceImpl implements TeamServices {
 				CommentResponse commentResponse = new CommentResponse();
 
 				commentResponse.setMessage(comment.getMessage());
+
 				commentResponse.setUserId(comment.getUserId());
 
 				System.out.println(commentResponse);
