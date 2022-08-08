@@ -43,7 +43,6 @@ public class Ticket {
 	private String description;
 
 	@Column(name = "category_id")
-	// @NotNull(message = "Catagory cant be null ")
 	private Integer categoryId;
 
 	@Column(name = "sub_category_id")
@@ -58,11 +57,11 @@ public class Ticket {
 	@Column(name = "assignee_id")
 	private Integer assigneeId;
 
-	@JsonFormat(pattern = "yyyy-MM-dd hh a") // change date format
+	@JsonFormat(pattern = "dd-MM-yyyy hh:mm a\"") // change date format
 	@Column(name = "create_date_time")
 	private LocalDateTime createDateTime = LocalDateTime.now();
 
-	@JsonFormat(pattern = "yyyy-MM-dd hh a")
+	@JsonFormat(pattern = "dd-MM-yyyy hh:mm  a")
 	@Column(name = "last_modified_date_time")
 	private LocalDateTime lastModifiedDateTime = LocalDateTime.now();
 

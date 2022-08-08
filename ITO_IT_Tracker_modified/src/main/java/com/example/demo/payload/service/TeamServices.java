@@ -8,7 +8,7 @@ import com.example.demo.payload.UserDto;
 import com.example.demo.response.TicketResponse;
 import com.example.demo.response.TicketResponseForViewAllTicket;
 
-public interface ItService {
+public interface TeamServices {
 
 	void deletticket(Integer ticketId);
 

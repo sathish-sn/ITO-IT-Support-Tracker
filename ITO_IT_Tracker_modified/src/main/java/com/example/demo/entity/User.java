@@ -39,14 +39,14 @@ public class User  {
 	
 	private String name;
 	
-	@Column(name = "email_id")
+	@Column(name = "email_id", unique = true , columnDefinition = "email is already exits")
 	private String emailId;    
 	
-	@JsonFormat(pattern = "yyyy-MM-dd hh a",shape = Shape.STRING)
+	@JsonFormat(pattern = "dd-MM-yyyy hh:mm a",shape = Shape.STRING)
 	@Column(name = "create_date_time")
 	private LocalDateTime createDateTime =LocalDateTime.now();
 	
-	@JsonFormat(pattern = "yyyy-MMM-dd hh a ",shape = Shape.STRING)
+	@JsonFormat(pattern = "dd-MM-yyyy hh:mm a",shape = Shape.STRING)
 	@Column(name = "last_modified_date_time")
 	private LocalDateTime lastModifiedDateTime =LocalDateTime.now();
 	

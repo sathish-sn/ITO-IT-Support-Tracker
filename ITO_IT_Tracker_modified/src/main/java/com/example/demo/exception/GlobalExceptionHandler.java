@@ -1,5 +1,6 @@
 package com.example.demo.exception;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,11 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends Throwable{
  
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@ExceptionHandler(ResourceNotFoundException.class)
 	public ResponseEntity<ApiResponse> resourceNotFoundExceptionHandler(ResourceNotFoundException exception){
 		
@@ -38,6 +44,7 @@ public class GlobalExceptionHandler extends Throwable{
 		
 		if(cause instanceof MismatchedInputException) {
 			MismatchedInputException missMatchException= (MismatchedInputException) cause;
+			
 			errorMap.put("Should be Integer", missMatchException.getPath().get(0).getFieldName());
 		}
 		
@@ -54,6 +61,7 @@ public class GlobalExceptionHandler extends Throwable{
 			System.out.println("errors "+error.getField());
 			errorMap.put(error.getField(),error.getDefaultMessage());
 		});
+		
 		return errorMap;
 	}
 	
@@ -86,4 +94,27 @@ public class GlobalExceptionHandler extends Throwable{
 		
 		return new ResponseEntity<ApiResponse> (apiResponse,HttpStatus.NOT_FOUND);
 	}
+	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(SQLIntegrityConstraintViolationException.class)
+	public ResponseEntity<ApiResponse> illegalArgumentException(SQLIntegrityConstraintViolationException exception){
+		
+		String message = "Email is already exits";
+		
+		ApiResponse apiResponse = new ApiResponse(message);
+		
+		return new ResponseEntity<ApiResponse> (apiResponse,HttpStatus.NOT_FOUND);
+	}
+	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(NullPointerException.class)
+	public ResponseEntity<ApiResponse> illegalArgumentException(NullPointerException exception){
+		
+		String message = "Can't be a null ";
+		
+		ApiResponse apiResponse = new ApiResponse(message);
+		
+		return new ResponseEntity<ApiResponse> (apiResponse,HttpStatus.NOT_FOUND);
+	}
+	
 }

@@ -24,7 +24,7 @@ import com.example.demo.entity.User;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.payload.CommentDto;
 import com.example.demo.payload.UserDto;
-import com.example.demo.payload.service.ItService;
+import com.example.demo.payload.service.TeamServices;
 import com.example.demo.repository.AdminRepo;
 import com.example.demo.repository.CategoryRepo;
 import com.example.demo.repository.CommentRepo;
@@ -38,7 +38,7 @@ import com.example.demo.response.TicketResponse;
 import com.example.demo.response.TicketResponseForViewAllTicket;
 
 @Service
-public class TeamServiceImpl implements ItService {
+public class TeamServiceImpl implements TeamServices {
 	org.slf4j.Logger logger = LoggerFactory.getLogger(TeamServiceImpl.class);
 
 	@Autowired
@@ -87,22 +87,30 @@ public class TeamServiceImpl implements ItService {
 			response.setTicketId(getAll.getTicketId());
 			System.out.println();
 
-			Category category = this.categoryRepo.getById(getAll.getCategoryId());
+			Category category = this.categoryRepo.findById(getAll.getCategoryId())
+					.orElseThrow(() -> new ResourceNotFoundException("category", "Id", getAll.getCategoryId()));
 			response.setCategoryDesc(category.getCategoryDesc());
 
-			SubCategory subCategory = this.subCategoryRepo.getById(getAll.getSubCategoryId());
+			SubCategory subCategory = this.subCategoryRepo.findById(getAll.getSubCategoryId())
+					.orElseThrow(() -> new ResourceNotFoundException("Subcategory", "Id", getAll.getSubCategoryId()));
 			response.setSubCategoryDesc(subCategory.getSubCategoryDesc());
 
-			Status getStatus = this.statusRepo.getById(getAll.getStatusId());
+			Status getStatus = this.statusRepo.findById(getAll.getStatusId())
+					.orElseThrow(() -> new ResourceNotFoundException("Status", "Id", getAll.getStatusId()));
 			response.setStatus(getStatus.getStatus());
 
 			response.setSubject(getAll.getSubject());
 			response.setDescription(getAll.getDescription());
-
+			if(getAll.getAssignee()==null) {
+				response.setAssignee(null);
+			}else {
+			response.setAssignee(getAll.getAssignee().getName());
+			}
 			if (getAll.getPriorityId() == null) {
 				response.setPriority(null);
 			} else {
-				Priority getPriority = this.priorityRepo.getById(getAll.getPriorityId());
+				Priority getPriority = this.priorityRepo.findById(getAll.getPriorityId())
+						.orElseThrow(() -> new ResourceNotFoundException("priority", "Id", getAll.getPriorityId()));
 				response.setPriority(getPriority.getPriority());
 			}
 
@@ -117,46 +125,48 @@ public class TeamServiceImpl implements ItService {
 	@Override
 	public TicketResponse viewTicketByID(Integer ticketId) {
 		TicketResponse response = new TicketResponse();
-		
+
 		Ticket getTicket = this.teamRepo.findById(ticketId)
 				.orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
 		response.setTicketId(ticketId);
 
-		Category category = this.categoryRepo.findById(getTicket.getCategoryId()).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", getTicket.getCategoryId()));
+		Category category = this.categoryRepo.findById(getTicket.getCategoryId())
+				.orElseThrow(() -> new ResourceNotFoundException("category", "Id", getTicket.getCategoryId()));
 		response.setCategoryDesc(category.getCategoryDesc());
-		
-		SubCategory subCategory = this.subCategoryRepo.findById(getTicket.getSubCategoryId()).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", getTicket.getSubCategoryId()));
+
+		SubCategory subCategory = this.subCategoryRepo.findById(getTicket.getSubCategoryId())
+				.orElseThrow(() -> new ResourceNotFoundException("subcategory", "Id", getTicket.getSubCategoryId()));
 		response.setSubCategoryDesc(subCategory.getSubCategoryDesc());
-		
+
 		Status getStatus = this.statusRepo.findById(getTicket.getStatusId())
-				.orElseThrow(() -> new ResourceNotFoundException("userId", "Id", getTicket.getStatusId()));
+				.orElseThrow(() -> new ResourceNotFoundException("status", "Id", getTicket.getStatusId()));
 		response.setStatus(getStatus.getStatus());
-		
+
 		response.setSubject(getTicket.getSubject());
 		response.setDescription(getTicket.getDescription());
-		
-		if(getTicket.getPriorityId() == null) {
+
+		if (getTicket.getPriorityId() == null) {
 			response.setPriority(null);
-		}else {
-			Priority getPriority = this.priorityRepo.findById(getTicket.getPriorityId()).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", getTicket.getSubCategoryId()));
+		} else {
+			Priority getPriority = this.priorityRepo.findById(getTicket.getPriorityId())
+					.orElseThrow(() -> new ResourceNotFoundException("priority", "Id", getTicket.getPriorityId()));
 			response.setPriority(getPriority.getPriority());
 		}
-		
-		
-		
+
 		if (getTicket.getAssigneeId() == null) {
 			response.setAssignee(null);
 		} else {
-			AdminTeam assignee = this.adminRepo.findById(getTicket.getAssigneeId()).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", getTicket.getSubCategoryId()));
+			AdminTeam assignee = this.adminRepo.findById(getTicket.getAssigneeId())
+					.orElseThrow(() -> new ResourceNotFoundException("Assignee", "Id", getTicket.getAssigneeId()));
 			response.setAssignee(assignee.getName());
 		}
-		
+
 		response.setLink("http://localhost:8080/api/team/ticketId/" + ticketId);
-		
+
 		List<Comments> comments = this.commentRepo.findAll();
-		
+
 		response.setComment(this.returnCommentResponse(comments, ticketId));
-		
+
 		return response;
 
 	}
@@ -169,7 +179,7 @@ public class TeamServiceImpl implements ItService {
 		User checkUserId = this.userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("userId", "Id", userId));
 
-		this.adminRepo.findById(adminId).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", adminId));
+		this.adminRepo.findById(adminId).orElseThrow(() -> new ResourceNotFoundException("Assignee", "Id", adminId));
 
 		setAssignee.setUser(checkUserId);
 
@@ -188,9 +198,10 @@ public class TeamServiceImpl implements ItService {
 	public String changeStatus(Integer ticketId, Integer userId, Integer statusId) {
 
 		Ticket setStatus = this.teamRepo.findById(ticketId)
-				.orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
+				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", ticketId));
 
-		Status getStatus = this.statusRepo.getById(setStatus.getStatusId());
+		Status getStatus = this.statusRepo.findById(setStatus.getStatusId())
+				.orElseThrow(() -> new ResourceNotFoundException("status", "Id", setStatus.getStatusId()));
 
 		String getOldStatus = getStatus.getStatus();
 
@@ -218,27 +229,42 @@ public class TeamServiceImpl implements ItService {
 	public String changePriority(Integer ticketId, Integer priorityId, Integer userId) {
 
 		Ticket setNewPriority = this.teamRepo.findById(ticketId)
-				.orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
+				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", ticketId));
 
-		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("userId", "Id", userId));
+		Priority checkPriorityId = this.priorityRepo.findById(priorityId)
+				.orElseThrow(() -> new ResourceNotFoundException("priority", "Id", priorityId));
 
-		Status getStatus = this.statusRepo.getById(setNewPriority.getStatusId());
+		System.out.println(setNewPriority.getPriorityId());
+		Integer value = setNewPriority.getPriorityId();
+		if (value == null) {
+			setNewPriority.setPriorityId(priorityId);
+
+			setNewPriority.setLastModifiedDateTime(LocalDateTime.now());
+
+			this.teamRepo.save(setNewPriority);
+
+			String msg = "priority changed from " + value + " to " + checkPriorityId.getPriority();
+
+			return msg;
+
+		}
+
+		this.userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user", "Id", userId));
+
+		Status getStatus = this.statusRepo.findById(setNewPriority.getStatusId())
+				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", setNewPriority.getStatusId()));
 
 		String getStatusOfTicket = getStatus.getStatus();
 
 		System.out.println(getStatusOfTicket);
 
-		System.out.println();
-
 		if (!(getStatusOfTicket.equalsIgnoreCase("open"))) {
 
-			return "Cant change the priority";
+			return "Cant change the priority as status is not open";
 		}
 
-		Priority checkPriorityId = this.priorityRepo.findById(priorityId)
-				.orElseThrow(() -> new ResourceNotFoundException("priorityId", "Id", priorityId));
-
-		Priority check = this.priorityRepo.getById(setNewPriority.getPriorityId());
+		Priority check = this.priorityRepo.findById(setNewPriority.getPriorityId())
+				.orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", setNewPriority.getPriorityId()));
 
 		String getOldPriority = check.getPriority();
 
@@ -260,10 +286,10 @@ public class TeamServiceImpl implements ItService {
 	@Override
 	public String commentOnTicket(CommentDto commentDto, Integer ticketId, Integer adminId) {
 
-		this.teamRepo.findById(ticketId).orElseThrow(() -> new ResourceNotFoundException("ticketId", "Id", ticketId));
+		this.teamRepo.findById(ticketId).orElseThrow(() -> new ResourceNotFoundException("ticket", "Id", ticketId));
 
 		AdminTeam checkAdminId = this.adminRepo.findById(adminId)
-				.orElseThrow(() -> new ResourceNotFoundException("AdminId", "Id", adminId));
+				.orElseThrow(() -> new ResourceNotFoundException("Admin", "Id", adminId));
 
 		Comments comment = this.modelMapper.map(commentDto, Comments.class);
 
@@ -291,9 +317,8 @@ public class TeamServiceImpl implements ItService {
 
 		User user = this.modelMapper.map(userDto, User.class);
 
-		List<User> findEmail = this.userRepo.findAll();
 
-		String regexp = "^(.+)@(\\\\S+)$";
+		String regexp = "(?:[a-z0-9A-Z!#$%&'?^_`{|}~-]+(?:\\.[a-z0-9A-Z!#$%&'*?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9A-Z](?:[a-z0-9A-Z-]*[a-z0-9A-Z])?\\.)+[a-z0-9A-Z](?:[a-z0-9A-Z]*[a-z0-9A-Z])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9A-Z]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
 
 		Pattern pattern = Pattern.compile(regexp);
 
@@ -301,30 +326,39 @@ public class TeamServiceImpl implements ItService {
 
 		if (!matcher.matches()) {
 			return "Please enter valid email id";
-		} else {
-
-			for (User getEmail : findEmail) {
-				if (getEmail.getEmailId() == null) {
-
-					continue;
-				}
-
-				if (getEmail.getEmailId().equalsIgnoreCase(userDto.getEmailId())) {
-
-					return "Email Id is already Exits";
-				}
-			}
-
-			user.setCreateDateTime(user.getCreateDateTime());
-
-			user.setLastModifiedDateTime(user.getLastModifiedDateTime());
-
-			user.setEmailId(userDto.getEmailId());
 		}
-		this.userRepo.save(user);
 
-		return "User with email " + userDto.getEmailId() + " created successfully \n "
-				+ "http://localhost:8080/api/team/users/?userId=" + user.getUserId();
+		int count = 2;
+		String checkIsUpper = userDto.getEmailId();
+		char[] charArray = checkIsUpper.toCharArray();
+		System.out.println(charArray);
+		for (int i = 0; i < charArray.length; i++) {
+
+			if (charArray[i] == '@' || charArray[i] == '.') {
+
+				continue;
+
+			} else if (Character.isUpperCase(charArray[i])) {
+				count++;
+			}
+		}
+		if(count == charArray.length)
+		if (userDto.getEmailId().equalsIgnoreCase(userDto.getEmailId())) {
+
+			return "Email Id is already Exits";
+		}
+	
+
+	user.setCreateDateTime(user.getCreateDateTime());
+
+	user.setLastModifiedDateTime(user.getLastModifiedDateTime());
+
+	user.setEmailId(userDto.getEmailId());
+
+	this.userRepo.save(user);
+
+	return"User with email "+userDto.getEmailId()+" created successfully \n "+"http://localhost:8080/api/team/users/?userId="+user.getUserId();
+
 	}
 
 	@Override
@@ -344,15 +378,17 @@ public class TeamServiceImpl implements ItService {
 
 		if (getUserId != null && getEmail == null) {
 
-			System.out.println("finding by email id");
-
 			int temp = getUserId;
 			User userById = this.userRepo.findById(getUserId)
 					.orElseThrow(() -> new ResourceNotFoundException("User", "Id", temp));
 			return this.modelMapper.map(userById, UserDto.class);
 		}
-		Integer UserId = this.userRepo.findByEmail(getEmail);
-
+		Integer UserId = null;
+		try {
+			UserId = this.userRepo.findByEmail(getEmail);
+		} catch (Exception e) {
+			throw new ResourceNotFoundException("Email Id not found  please check the email id");
+		}
 		if (emailId != null && getUserId == null) {
 			System.out.println("finding by user Id");
 
@@ -369,6 +405,12 @@ public class TeamServiceImpl implements ItService {
 		}
 		if (getUserId == null && emailId == null) {
 			throw new ResourceNotFoundException("Please enter User Id or Email");
+		}
+		if (getUserId != null && emailId != null) {
+			int temp = getUserId;
+			User userById = this.userRepo.findById(getUserId)
+					.orElseThrow(() -> new ResourceNotFoundException("User", "Id", temp));
+			return this.modelMapper.map(userById, UserDto.class);
 		}
 
 		return null;// map;

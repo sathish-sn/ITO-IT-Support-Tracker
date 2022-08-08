@@ -13,7 +13,9 @@ public interface UserService {
 	String commentOnTicket(CommentDto commentDto, Integer ticketId, Integer adminId);
 
 	Map<String, String> createTicket(TicketDto teamdto, Integer userId);
+	
 	TicketResponseForViewAllTicket viewTicketByTicketId(Integer ticketId);
+	
 	List<TicketResponseForViewAllTicket> viewTicketByUserId(Integer userId);
 
 }

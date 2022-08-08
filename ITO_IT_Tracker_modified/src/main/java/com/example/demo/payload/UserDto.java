@@ -19,9 +19,9 @@ public class UserDto {
 	
 	private String emailId;                  
 	
-	@JsonFormat(pattern = "yyyy-MMM-dd hh a ",shape =JsonFormat.Shape.STRING)
+	@JsonFormat(pattern = "dd-MMM-yyyy hh:mm a ",shape =JsonFormat.Shape.STRING)
 	private LocalDateTime create_date_time =LocalDateTime.now();
 	
-	@JsonFormat(pattern = "yyyy-MMM-dd hh a ",shape =JsonFormat.Shape.STRING)
+	@JsonFormat(pattern = "dd-MMM-yyyy hh:mm a ",shape =JsonFormat.Shape.STRING)
 	private LocalDateTime last_modified_date_time =LocalDateTime.now();
 }

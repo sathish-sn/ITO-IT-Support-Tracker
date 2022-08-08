@@ -3,6 +3,8 @@ package com.example.demo.controller;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,7 @@ import com.example.demo.payload.ApiResponse;
 import com.example.demo.payload.CommentDto;
 import com.example.demo.payload.TicketDto;
 import com.example.demo.payload.UserDto;
-import com.example.demo.payload.service.ItService;
+import com.example.demo.payload.service.TeamServices;
 import com.example.demo.response.TicketResponse;
 import com.example.demo.response.TicketResponseForViewAllTicket;
 
@@ -29,11 +31,11 @@ import com.example.demo.response.TicketResponseForViewAllTicket;
 public class TeamController {
 
 	@Autowired
-	private ItService service;
+	private TeamServices service;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------	
 	@PostMapping("/")
-	public ResponseEntity<String> createUser(@RequestBody UserDto userDto) {
+	public ResponseEntity<String> createUser(@Valid @RequestBody UserDto userDto) {
 		String createUserDto = this.service.createUser(userDto);
 
 		return new ResponseEntity<>(createUserDto, HttpStatus.CREATED);
@@ -65,6 +67,7 @@ public class TeamController {
 
 	@GetMapping("/getAllTicket")
 	public List<TicketResponseForViewAllTicket> viewTicketList() {
+		
 		return (this.service.viewTicketList());
 	}
 
@@ -74,6 +77,7 @@ public class TeamController {
 	public ResponseEntity<TicketResponse> viewTicketById(@PathVariable Integer ticketId) {
 
 		return ResponseEntity.ok(this.service.viewTicketByID(ticketId));
+	
 	}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------	
@@ -98,6 +102,7 @@ public class TeamController {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------	
 	@DeleteMapping("/delete/user/")
 	public ResponseEntity<ApiResponse> deleteUser(@RequestParam(value = "userId") Integer userId) {
+		
 		this.service.deleteUser(userId);
 
 		return new ResponseEntity<ApiResponse>(new ApiResponse("user id deleted"), HttpStatus.OK);
@@ -111,6 +116,8 @@ public class TeamController {
 
 		return new ResponseEntity<ApiResponse>(new ApiResponse("Ticket deleted"), HttpStatus.OK);
 	}
+	
+//------------------------------------------------------------------------------------------------------------------------------------------------------------	
 
 	@PutMapping("/changeStatus/")
 	public ResponseEntity<?> changeStatus(@RequestParam(value = "ticketId") Integer ticketId,
@@ -121,13 +128,20 @@ public class TeamController {
 		return new ResponseEntity<ApiResponse>(new ApiResponse(message), HttpStatus.OK);
 
 	}
+	
+//------------------------------------------------------------------------------------------------------------------------------------------------------------	
 
 	@PutMapping("/setAssignee/")
 	public ResponseEntity<?> setAssignee(@RequestParam(value = "ticketId") Integer ticketId,
 			@RequestParam(value = "adminId") Integer adminId, @RequestParam(value = "userId") Integer userId) {
+		
 		String message = service.setAssignee(ticketId, adminId, userId);
+		
 		return new ResponseEntity<ApiResponse>(new ApiResponse(message), HttpStatus.OK);
 	}
+	
+//------------------------------------------------------------------------------------------------------------------------------------------------------------	
+
 
 	@PutMapping("/comment/")
 	public ResponseEntity<String> commentOnTicket(@RequestBody CommentDto commentDto,
@@ -137,5 +151,7 @@ public class TeamController {
 
 		return ResponseEntity.ok(updatedUser);
 	}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------	
 
 }
